@@ -6,11 +6,19 @@
     "type": "composer-plugin",
     "require": {
         "symfony/console": "~2.6",
-        "composer-plugin-api": "1.0.0"
+        "composer-plugin-api": "1.0.0",
+        "psr/log": "~1.0"
+    },
+    "extra": {
+        "class": "Kwf\\Lingohub\\DownloadPlugin",
+        "kwf-lingohub": {
+            "apiToken": ""
+        }
     },
     "autoload": {
-        "psr-0": { "Kwf\\Linghub\\": "" }
+        "psr-0": { "Kwf\\Lingohub\\": "" }
     },
+    "bin": ["bin/lingohub"],
     "minimum-stability": "dev",
     "prefer-stable": true
 }

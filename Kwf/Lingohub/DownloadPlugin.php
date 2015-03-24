@@ -4,8 +4,9 @@ namespace Kwf\Lingohub;
 use Composer\Composer;
 use Composer\Plugin\PluginInterface;
 use Composer\EventDispatcher\EventSubscriberInterface;
+use Kwf\Lingohub\Output;
 
-class Kwf_Lingohub_DownloadPlugin extends PluginInterface, EventSubscriberInterface
+class DownloadPlugin implements PluginInterface, EventSubscriberInterface
 {
     protected $composer;
     protected $io;
@@ -31,20 +32,7 @@ class Kwf_Lingohub_DownloadPlugin extends PluginInterface, EventSubscriberInterf
 
     public function onPostUpdateInstall(Event $event)
     {
-        $packages = array(
-            $this->composer->getPackage()
-        );
-        $packages = array_merge($packages, $this->composer->getRepositoryManager()->getLocalRepository()->getCanonicalPackages());
-
-        foreach ($packages as $package) {
-            if (!($package instanceof \Composer\Package\CompletePackage)) continue;
-            $extra = $package->getExtra();
-            if (!isset($extra['kwf-lingohub'])) continue;
-
-            $account = $extra['kwf-lingohub']['account'];
-            $project = $extra['kwf-lingohub']['project'];
-//             $filename = $extra['kwf-lingohub']['filename'];
-//             $downloadUrl = "api/v1/$account/projects/$project/resources/$filename";
-        }
+        $download = new DownloadTranslations(new ComposerOutput($output));
+        $download->downloadTrlFiles();
     }
 }
