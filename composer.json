@@ -10,10 +10,7 @@
         "psr/log": "~1.0"
     },
     "extra": {
-        "class": "Kwf\\Lingohub\\DownloadPlugin",
-        "kwf-lingohub": {
-            "apiToken": ""
-        }
+        "class": "Kwf\\Lingohub\\DownloadPlugin"
     },
     "autoload": {
         "psr-0": { "Kwf\\Lingohub\\": "" }

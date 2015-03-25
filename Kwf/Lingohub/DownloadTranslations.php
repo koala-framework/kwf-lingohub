@@ -19,13 +19,9 @@ class DownloadTranslations
 
     public function downloadTrlFiles()
     {
-        $composerJsonFile = file_get_contents('composer.json');
-        $composerConfig = json_decode($composerJsonFile);
-        $apiToken = false;
-        $this->_logger->info('Get Api-Token from root composer.json');
-        if (isset($composerConfig->extra->{'kwf-lingohub'}) && isset($composerConfig->extra->{'kwf-lingohub'}->apiToken)) {
-            $apiToken = $composerConfig->extra->{'kwf-lingohub'}->apiToken;
-        }
+        $config = json_decode(file_get_contents($_SERVER['HOME'].'/.config/koala-framework/kwf-lingohub/config'));
+        $apiToken = $config->apiToken;
+        if (!$apiToken) $this->_logger->critical('No API-Token found in "~/.config/koala-framework/kwf-lingohub/api-token"! Cannot load resources without Api-Token!');
 
         $this->_logger->info('Iterating over packages and downloading trl-resources');
         $composerJsonFilePaths = $this->_getComposerJsonFiles();
@@ -38,14 +34,7 @@ class DownloadTranslations
             $kwfLingohub = $composerConfig->extra->{'kwf-lingohub'};
             $this->_logger->info("Checking for resources of {$kwfLingohub->account}/{$kwfLingohub->project}");
 
-            if ((!isset($kwfLingohub->apiToken) || !$kwfLingohub->apiToken) && !$apiToken) {
-                $this->_logger->critical('No API-Token in root composer.json or package composer.json defined! Cannot load resources without Api-Token!');
-                exit;
-            }
-
-            $params = array(
-                'auth_token' => $kwfLingohub->apiToken ? $kwfLingohub->apiToken : $apiToken
-            );
+            $params = array( 'auth_token' => $apiToken );
             $resourcesUrl = "https://api.lingohub.com/v1/{$kwfLingohub->account}"
                 ."/projects/{$kwfLingohub->project}/resources.json"
                 ."?".http_build_query($params);
