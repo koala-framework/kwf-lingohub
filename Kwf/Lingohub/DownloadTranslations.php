@@ -45,7 +45,7 @@ class DownloadTranslations
                 if (!file_exists($trlDir)) {
                     mkdir($trlDir);
                 }
-                file_put_contents($trlDir.'/'.$resource->name, $file);
+                file_put_contents($trlDir.'/'.$resource->project_locale.'.po', $file);
             }
         }
     }
