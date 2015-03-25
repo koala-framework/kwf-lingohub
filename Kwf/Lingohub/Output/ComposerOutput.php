@@ -2,11 +2,12 @@
 namespace Kwf\Lingohub\Output;
 
 use Psr\Log\LoggerInterface;
+use Composer\IO\IOInterface;
 
 class ComposerOutput implements LoggerInterface
 {
     protected $_io;
-    public function __construct(Composer\IOInterface $io)
+    public function __construct(IOInterface $io)
     {
         $this->_io;
     }

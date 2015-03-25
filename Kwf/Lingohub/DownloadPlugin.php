@@ -10,13 +10,13 @@ use Kwf\Lingohub\Output\ComposerOutput;
 
 class DownloadPlugin implements PluginInterface, EventSubscriberInterface
 {
-    protected $composer;
-    protected $io;
+    protected $_composer;
+    protected $_io;
 
     public function activate(Composer $composer, IOInterface $io)
     {
-        $this->composer = $composer;
-        $this->io = $io;
+        $this->_composer = $composer;
+        $this->_io = $io;
     }
 
     public static function getSubscribedEvents()
@@ -33,7 +33,7 @@ class DownloadPlugin implements PluginInterface, EventSubscriberInterface
 
     public function onPostUpdateInstall(Event $event)
     {
-        $download = new DownloadTranslations(new ComposerOutput($output));
+        $download = new DownloadTranslations(new ComposerOutput($this->_io));
         $download->downloadTrlFiles();
     }
 }
