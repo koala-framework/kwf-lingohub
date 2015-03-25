@@ -1,5 +1,5 @@
 <?php
-namespace Kwf\Lingohub;
+namespace Kwf\Lingohub\Output;
 
 use Psr\Log\LoggerInterface;
 
