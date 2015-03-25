@@ -6,7 +6,7 @@ use Composer\Plugin\PluginInterface;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\IO\IOInterface;
 use Composer\Script\Event;
-use Kwf\Lingohub\Output;
+use Kwf\Lingohub\Output\ComposerOutput;
 
 class DownloadPlugin implements PluginInterface, EventSubscriberInterface
 {
@@ -16,7 +16,6 @@ class DownloadPlugin implements PluginInterface, EventSubscriberInterface
     public function activate(Composer $composer, IOInterface $io)
     {
         $this->composer = $composer;
-
         $this->io = $io;
     }
 
