@@ -17,11 +17,40 @@ class DownloadTranslations
         return $files;
     }
 
+    /**
+    * Adopted from https://github.com/composer/composer/blob/9f9cff558e5f447165f4265f320b2b1178f18301/src/Composer/Factory.php
+    */
+    private function _getHomeDir()
+    {
+        if (defined('PHP_WINDOWS_VERSION_MAJOR')) {
+            if (!getenv('APPDATA')) {
+                $this->_logger->critical("The APPDATA environment variable must be set for kwf-lingohub to run correctly");
+                exit(1);
+            }
+            $home = strtr(getenv('APPDATA'), '\\', '/') . '/Config';
+        } else {
+            if (!getenv('HOME')) {
+                $this->_logger->critical("The HOME environment variable must be set for kwf-lingohub to run correctly");
+                exit(1);
+            }
+            $home = rtrim(getenv('HOME'), '/') . '/.config';
+        }
+        return $home;
+    }
+
     public function downloadTrlFiles()
     {
-        $config = json_decode(file_get_contents($_SERVER['HOME'].'/.config/koala-framework/kwf-lingohub/config'));
+        $path = $this->_getHomeDir().'/koala-framework/kwf-lingohub/config';
+        if (!file_exists($path)) {
+            $this->_logger->critical("No kwf-lingohub config found! ($path)");
+            exit(1);
+        }
+        $config = json_decode(file_get_contents($path));
+        if (!isset($config->apiToken)) {
+            $this->_logger->critical("No API-Token found in $path! Cannot load resources without Api-Token!");
+            exit(1);
+        }
         $apiToken = $config->apiToken;
-        if (!$apiToken) $this->_logger->critical('No API-Token found in "~/.config/koala-framework/kwf-lingohub/api-token"! Cannot load resources without Api-Token!');
 
         $this->_logger->info('Iterating over packages and downloading trl-resources');
         $composerJsonFilePaths = $this->_getComposerJsonFiles();
