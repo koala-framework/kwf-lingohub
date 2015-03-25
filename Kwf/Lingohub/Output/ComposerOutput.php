@@ -9,7 +9,7 @@ class ComposerOutput implements LoggerInterface
     protected $_io;
     public function __construct(IOInterface $io)
     {
-        $this->_io;
+        $this->_io = $io;
     }
 
     public function emergency($message, array $context = array()) {}
