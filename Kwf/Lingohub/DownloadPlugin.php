@@ -4,6 +4,8 @@ namespace Kwf\Lingohub;
 use Composer\Composer;
 use Composer\Plugin\PluginInterface;
 use Composer\EventDispatcher\EventSubscriberInterface;
+use Composer\IO\IOInterface;
+use Composer\Script\Event;
 use Kwf\Lingohub\Output;
 
 class DownloadPlugin implements PluginInterface, EventSubscriberInterface
