@@ -8,13 +8,11 @@ class Config implements ConfigInterface
     {
         $path = $this->_getHomeDir().'/koala-framework/kwf-lingohub/config';
         if (!file_exists($path)) {
-            $this->_logger->critical("No kwf-lingohub config found! ($path)");
-            exit(1);
+            throw new Exception("No kwf-lingohub config found! ($path)");
         }
         $config = json_decode(file_get_contents($path));
         if (!isset($config->apiToken)) {
-            $this->_logger->critical("No API-Token found in $path! Cannot load resources without Api-Token!");
-            exit(1);
+            throw new Exception("No API-Token found in $path! Cannot load resources without Api-Token!");
         }
         $this->_apiToken = $config->apiToken;
     }
