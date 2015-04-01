@@ -7,6 +7,8 @@ class DownloadTranslations
 {
     protected $_logger;
     protected $_config;
+    protected $_updateDownloadedTrlFiles = false;
+
     public function __construct(LoggerInterface $logger, ConfigInterface $config)
     {
         $this->_logger = $logger;
@@ -18,6 +20,11 @@ class DownloadTranslations
         $files = glob('vendor/*/*/composer.json');
         array_unshift($files, 'composer.json');
         return $files;
+    }
+
+    public function setUpdateDownloadedTrlFiles($updateDownloadedTrlFiles)
+    {
+        $this->_updateDownloadedTrlFiles = $updateDownloadedTrlFiles;
     }
 
     public function downloadTrlFiles()
@@ -39,13 +46,17 @@ class DownloadTranslations
                 ."?".http_build_query($params);
             $resources = json_decode(file_get_contents($resourcesUrl));
             foreach ($resources->members as $resource) {
+                $trlDir = dirname($composerJsonFilePath).'/trl';
+                $poFilePath = $trlDir.'/'.$resource->project_locale.'.po';
+                if (!$this->_updateDownloadedTrlFiles && file_exists($poFilePath)) {
+                    continue;
+                }
                 $this->_logger->info("Downloading {$resource->name}");
                 $file = file_get_contents($resource->links[0]->href.'&'.http_build_query($params));
-                $trlDir = dirname($composerJsonFilePath).'/trl';
                 if (!file_exists($trlDir)) {
                     mkdir($trlDir);
                 }
-                file_put_contents($trlDir.'/'.$resource->project_locale.'.po', $file);
+                file_put_contents($poFilePath, $file);
             }
         }
     }
