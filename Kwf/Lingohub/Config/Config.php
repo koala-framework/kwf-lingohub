@@ -8,11 +8,11 @@ class Config implements ConfigInterface
     {
         $path = $this->_getHomeDir().'/koala-framework/kwf-lingohub/config';
         if (!file_exists($path)) {
-            throw new Exception("No kwf-lingohub config found! ($path)");
+            throw new \Exception("No kwf-lingohub config found! ($path)");
         }
         $config = json_decode(file_get_contents($path));
         if (!isset($config->apiToken)) {
-            throw new Exception("No API-Token found in $path! Cannot load resources without Api-Token!");
+            throw new \Exception("No API-Token found in $path! Cannot load resources without Api-Token!");
         }
         $this->_apiToken = $config->apiToken;
     }
@@ -24,12 +24,12 @@ class Config implements ConfigInterface
     {
         if (defined('PHP_WINDOWS_VERSION_MAJOR')) {
             if (!getenv('APPDATA')) {
-                throw new Exception("The APPDATA environment variable must be set for kwf-lingohub to run correctly");
+                throw new \Exception("The APPDATA environment variable must be set for kwf-lingohub to run correctly");
             }
             $home = strtr(getenv('APPDATA'), '\\', '/') . '/Config';
         } else {
             if (!getenv('HOME')) {
-                throw new Exception("The HOME environment variable must be set for kwf-lingohub to run correctly");
+                throw new \Exception("The HOME environment variable must be set for kwf-lingohub to run correctly");
             }
             $home = rtrim(getenv('HOME'), '/') . '/.config';
         }
