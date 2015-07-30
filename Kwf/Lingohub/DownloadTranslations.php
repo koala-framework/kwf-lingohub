@@ -52,7 +52,7 @@ class DownloadTranslations
                     continue;
                 }
                 $this->_logger->info("Downloading {$resource->name}");
-                $file = file_get_contents($resource->links[0]->href.'&'.http_build_query($params));
+                $file = file_get_contents($resource->links[0]->href.'?'.http_build_query($params));
                 if (!file_exists($trlDir)) {
                     mkdir($trlDir);
                 }
