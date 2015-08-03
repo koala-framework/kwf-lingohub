@@ -53,7 +53,7 @@ class DownloadTranslations
                 }
                 $this->_logger->info("Downloading {$resource->name}");
                 $urlParts = parse_url($resource->links[0]->href);
-                $separator =  isset($urlParts['query']) ? '?' : '&';
+                $separator =  isset($urlParts['query']) ? '&' : '?';
                 $file = file_get_contents($resource->links[0]->href.$separator.http_build_query($params));
                 if (!file_exists($trlDir)) {
                     mkdir($trlDir);
