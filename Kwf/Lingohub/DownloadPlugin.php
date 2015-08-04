@@ -30,12 +30,15 @@ class DownloadPlugin implements PluginInterface, EventSubscriberInterface
             ),
             'post-update-cmd' => array(
                 array('onPostUpdateInstall', 0)
-            ),
+            )
         );
     }
 
     public function onPostUpdateInstall(Event $event)
     {
+        if (!class_exists(DownloadTranslations)) { // uninstalling this package
+            return;
+        }
         $download = new DownloadTranslations(new ComposerOutput($this->_io), $this->_config);
         $download->downloadTrlFiles();
     }
