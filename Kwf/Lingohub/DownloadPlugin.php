@@ -36,7 +36,7 @@ class DownloadPlugin implements PluginInterface, EventSubscriberInterface
 
     public function onPostUpdateInstall(Event $event)
     {
-        if (!class_exists(DownloadTranslations)) { // uninstalling this package
+        if (!class_exists(__NAMESPACE__.'\\DownloadTranslations')) { // uninstalling this package
             return;
         }
         $download = new DownloadTranslations(new ComposerOutput($this->_io), $this->_config);
