@@ -19,20 +19,9 @@ class DownloadTranslationsScript extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->_deleteTrlFiles();
+        DownloadTranslations::deleteTrlFiles();
         $download = new DownloadTranslations(new ConsoleLogger($output), new Config());
         $download->setUpdateDownloadedTrlFiles($input->getOption('update'));
         $download->downloadTrlFiles();
-    }
-
-    private function _deleteTrlFiles()
-    {
-        $composerJsonFilePaths = DownloadTranslations::getComposerJsonFiles();
-        foreach ($composerJsonFilePaths as $composerJsonFilePath) {
-            $trlDir = dirname($composerJsonFilePath).'/trl';
-            if (!is_dir($trlDir)) continue;
-            array_map('unlink', glob("$trlDir/*.*"));
-            rmdir($trlDir);
-        }
     }
 }

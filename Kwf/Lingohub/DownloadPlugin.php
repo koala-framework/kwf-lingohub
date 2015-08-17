@@ -26,15 +26,26 @@ class DownloadPlugin implements PluginInterface, EventSubscriberInterface
     {
         return array(
             'post-install-cmd' => array(
-                array('onPostUpdateInstall', 0)
+                array('onPostInstall', 0)
             ),
             'post-update-cmd' => array(
-                array('onPostUpdateInstall', 0)
+                array('onPostUpdate', 0)
             )
         );
     }
 
-    public function onPostUpdateInstall(Event $event)
+    public function onPostUpdate(Event $event)
+    {
+        DownloadTranslations::deleteTrlFiles();
+        $this->_downloadTranslations($event);
+    }
+
+    public function onPostInstall(Event $event)
+    {
+        $this->_downloadTranslations($event);
+    }
+
+    private function _downloadTranslations(Event $event)
     {
         if (!class_exists(__NAMESPACE__.'\\DownloadTranslations')) { // uninstalling this package
             return;

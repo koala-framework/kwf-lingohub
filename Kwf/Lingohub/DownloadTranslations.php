@@ -15,6 +15,17 @@ class DownloadTranslations
         $this->_config = $config;
     }
 
+    public static function deleteTrlFiles()
+    {
+        $composerJsonFilePaths = DownloadTranslations::getComposerJsonFiles();
+        foreach ($composerJsonFilePaths as $composerJsonFilePath) {
+            $trlDir = dirname($composerJsonFilePath).'/trl';
+            if (!is_dir($trlDir)) continue;
+            array_map('unlink', glob("$trlDir/*.*"));
+            rmdir($trlDir);
+        }
+    }
+
     public static function getComposerJsonFiles()
     {
         $files = glob('vendor/*/*/composer.json');
