@@ -15,7 +15,7 @@ class DownloadTranslations
         $this->_config = $config;
     }
 
-    private function _getComposerJsonFiles()
+    public static function getComposerJsonFiles()
     {
         $files = glob('vendor/*/*/composer.json');
         array_unshift($files, 'composer.json');
@@ -30,7 +30,7 @@ class DownloadTranslations
     public function downloadTrlFiles()
     {
         $this->_logger->info('Iterating over packages and downloading trl-resources');
-        $composerJsonFilePaths = $this->_getComposerJsonFiles();
+        $composerJsonFilePaths = DownloadTranslations::getComposerJsonFiles();
         foreach ($composerJsonFilePaths as $composerJsonFilePath) {
             $composerJsonFile = file_get_contents($composerJsonFilePath);
             $composerConfig = json_decode($composerJsonFile);
