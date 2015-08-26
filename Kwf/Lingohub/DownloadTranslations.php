@@ -47,8 +47,10 @@ class DownloadTranslations
             $this->_logger->info("Checking for resources of {$kwfLingohub->account}/{$kwfLingohub->project}");
 
             $params = array( 'auth_token' => $this->_config->getApiToken() );
-            $resourcesUrl = "https://api.lingohub.com/v1/{$kwfLingohub->account}"
-                ."/projects/{$kwfLingohub->project}/resources.json"
+            $accountName = strtolower($kwfLingohub->account);
+            $projectName = strtolower($kwfLingohub->project);
+            $resourcesUrl = "https://api.lingohub.com/v1/$accountName"
+                ."/projects/$projectName/resources.json"
                 ."?".http_build_query($params);
             $resources = json_decode(file_get_contents($resourcesUrl));
             foreach ($resources->members as $resource) {
