@@ -33,11 +33,6 @@ class DownloadTranslations
         return $files;
     }
 
-    public function setUpdateDownloadedTrlFiles($updateDownloadedTrlFiles)
-    {
-        $this->_updateDownloadedTrlFiles = $updateDownloadedTrlFiles;
-    }
-
     public function downloadTrlFiles()
     {
         $this->_logger->info('Iterating over packages and downloading trl-resources');
@@ -59,9 +54,8 @@ class DownloadTranslations
             foreach ($resources->members as $resource) {
                 $trlDir = dirname($composerJsonFilePath).'/trl';
                 $poFilePath = $trlDir.'/'.$resource->project_locale.'.po';
-                if (!$this->_updateDownloadedTrlFiles && file_exists($poFilePath)) {
-                    continue;
-                }
+                if (file_exists($poFilePath)) continue;
+
                 $this->_logger->info("Downloading {$resource->name}");
                 $urlParts = parse_url($resource->links[0]->href);
                 $separator =  isset($urlParts['query']) ? '&' : '?';

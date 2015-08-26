@@ -13,15 +13,13 @@ class DownloadTranslationsScript extends Command
     protected function configure()
     {
         $this->setName('downloadTranslations')
-            ->setDescription('Download translations for every package defining lingohub project')
-            ->addOption('update', 'u', InputOption::VALUE_OPTIONAL, 'Download latest version');
+            ->setDescription('Download translations for every package defining lingohub project');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         DownloadTranslations::deleteTrlFiles();
         $download = new DownloadTranslations(new ConsoleLogger($output), new Config());
-        $download->setUpdateDownloadedTrlFiles($input->getOption('update'));
         $download->downloadTrlFiles();
     }
 }
