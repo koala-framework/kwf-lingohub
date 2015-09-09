@@ -5,7 +5,7 @@ use Kwf\Lingohub\Config\ConfigInterface;
 
 class DownloadTranslations
 {
-    static $TEMP_TRL_FOLDER = 'trl';
+    static $TEMP_TRL_FOLDER = 'koala-framework-lingohub-trl';
     static $TEMP_LAST_UPDATE_FILE = 'last_update.txt';
 
     protected $_logger;
