@@ -90,7 +90,10 @@ class DownloadTranslations
                 }
                 file_put_contents($this->_getLastUpdateFile($accountName, $projectName), date('Y-m-d H:i:s'));
             }
-            copy($this->_getTempFolder($accountName, $projectName), dirname($composerJsonFilePath).'/trl');
+            foreach (scandir($this->_getTempFolder($accountName, $projectName)) as $file) {
+                if (substr($file, 0, 1) === '.') continue;
+                copy($file, dirname($composerJsonFilePath).'/trl/'.basename($file));
+            }
         }
         $this->_logger->info("Download duration: ".(microtime() - $start));
     }
