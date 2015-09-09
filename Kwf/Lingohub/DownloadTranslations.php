@@ -72,7 +72,7 @@ class DownloadTranslations
             if ($this->_checkDownloadTrlFiles($accountName, $projectName)) {
                 $trlTempDir = $this->_getTempFolder($accountName, $projectName);
                 if (!file_exists($trlTempDir)) {
-                    mkdir($trlTempDir, 0666, true);//write and read for everyone
+                    mkdir($trlTempDir, 0777, true);//write and read for everyone
                 }
                 $this->_logger->info("Checking for resources of {$kwfLingohub->account}/{$kwfLingohub->project}");
                 $params = array( 'auth_token' => $this->_config->getApiToken() );
