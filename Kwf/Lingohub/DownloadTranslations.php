@@ -32,7 +32,7 @@ class DownloadTranslations
 
     private function _getTempFolder($account = null, $project = null)
     {
-        $path = file_exists(sys_get_temp_dir().'/'.DownloadTranslations::$TEMP_TRL_FOLDER);
+        $path = sys_get_temp_dir().'/'.DownloadTranslations::$TEMP_TRL_FOLDER;
         if ($account && $project) {
             $path .= "/$account/$project";
         }
