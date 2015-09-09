@@ -18,8 +18,8 @@ class DownloadTranslationsScript extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        DownloadTranslations::deleteTrlFiles();
         $download = new DownloadTranslations(new ConsoleLogger($output), new Config());
+        $download->forceDownloadTrlFiles(true);
         $download->downloadTrlFiles();
     }
 }

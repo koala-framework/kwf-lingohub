@@ -5,6 +5,9 @@ use Kwf\Lingohub\Config\ConfigInterface;
 
 class DownloadTranslations
 {
+    static $TEMP_TRL_FOLDER = 'trl';
+    static $TEMP_LAST_UPDATE_FILE = 'last_update.txt';
+
     protected $_logger;
     protected $_config;
     protected $_updateDownloadedTrlFiles = false;
@@ -15,15 +18,9 @@ class DownloadTranslations
         $this->_config = $config;
     }
 
-    public static function deleteTrlFiles()
+    public function forceDownloadTrlFiles($download)
     {
-        $composerJsonFilePaths = DownloadTranslations::getComposerJsonFiles();
-        foreach ($composerJsonFilePaths as $composerJsonFilePath) {
-            $trlDir = dirname($composerJsonFilePath).'/trl';
-            if (!is_dir($trlDir)) continue;
-            array_map('unlink', glob("$trlDir/*.*"));
-            rmdir($trlDir);
-        }
+        $this->_updateDownloadedTrlFiles = $download;
     }
 
     public static function getComposerJsonFiles()
@@ -33,8 +30,34 @@ class DownloadTranslations
         return $files;
     }
 
+    private function _getTempFolder($account = null, $project = null)
+    {
+        $path = file_exists(sys_get_temp_dir().'/'.DownloadTranslations::$TEMP_TRL_FOLDER);
+        if ($account && $project) {
+            $path .= "/$account/$project";
+        }
+        return $path;
+    }
+
+    private function _getLastUpdateFile($account, $project)
+    {
+        return $this->_getTempFolder($account, $project).'/'.DownloadTranslations::$TEMP_LAST_UPDATE_FILE;
+    }
+
+    private function _checkDownloadTrlFiles($account, $project)
+    {
+        if ($this->_updateDownloadedTrlFiles) return true;
+        $downloadFiles = true;
+        if (file_exists($this->_getLastUpdateFile($account, $project))) {
+            $lastDownloadTimestamp = strtotime(substr(file_get_contents('test.txt'), 0, strlen('HHHH-MM-DD')));
+            $downloadFiles = strtotime('today') > $lastDownloadTimestamp;
+        }
+        return $downloadFiles;
+    }
+
     public function downloadTrlFiles()
     {
+        $start = microtime();
         $this->_logger->info('Iterating over packages and downloading trl-resources');
         $composerJsonFilePaths = DownloadTranslations::getComposerJsonFiles();
         foreach ($composerJsonFilePaths as $composerJsonFilePath) {
@@ -44,29 +67,31 @@ class DownloadTranslations
             if (!isset($composerConfig->extra->{'kwf-lingohub'})) continue;
 
             $kwfLingohub = $composerConfig->extra->{'kwf-lingohub'};
-            $this->_logger->info("Checking for resources of {$kwfLingohub->account}/{$kwfLingohub->project}");
-
-            $params = array( 'auth_token' => $this->_config->getApiToken() );
             $accountName = strtolower($kwfLingohub->account);
             $projectName = strtolower($kwfLingohub->project);
-            $resourcesUrl = "https://api.lingohub.com/v1/$accountName"
-                ."/projects/$projectName/resources.json"
-                ."?".http_build_query($params);
-            $resources = json_decode(file_get_contents($resourcesUrl));
-            foreach ($resources->members as $resource) {
-                $trlDir = dirname($composerJsonFilePath).'/trl';
-                $poFilePath = $trlDir.'/'.$resource->project_locale.'.po';
-                if (file_exists($poFilePath)) continue;
-
-                $this->_logger->info("Downloading {$resource->name}");
-                $urlParts = parse_url($resource->links[0]->href);
-                $separator =  isset($urlParts['query']) ? '&' : '?';
-                $file = file_get_contents($resource->links[0]->href.$separator.http_build_query($params));
-                if (!file_exists($trlDir)) {
-                    mkdir($trlDir);
+            if ($this->_checkDownloadTrlFiles($accountName, $projectName)) {
+                $trlTempDir = $this->_getTempFolder($accountName, $projectName);
+                if (!file_exists($trlTempDir)) {
+                    mkdir($trlTempDir, 0333, true);//write and read for everyone
                 }
-                file_put_contents($poFilePath, $file);
+                $this->_logger->info("Checking for resources of {$kwfLingohub->account}/{$kwfLingohub->project}");
+                $params = array( 'auth_token' => $this->_config->getApiToken() );
+                $resourcesUrl = "https://api.lingohub.com/v1/$accountName"
+                    ."/projects/$projectName/resources.json"
+                    ."?".http_build_query($params);
+                $resources = json_decode(file_get_contents($resourcesUrl));
+                foreach ($resources->members as $resource) {
+                    $poFilePath = $trlTempDir.'/'.$resource->project_locale.'.po';
+                    $this->_logger->info("Downloading {$resource->name}");
+                    $urlParts = parse_url($resource->links[0]->href);
+                    $separator =  isset($urlParts['query']) ? '&' : '?';
+                    $file = file_get_contents($resource->links[0]->href.$separator.http_build_query($params));
+                    file_put_contents($poFilePath, $file);
+                }
+                file_put_contents($this->_getLastUpdateFile($accountName, $projectName), date('Y-m-d H:i:s'));
             }
+            copy($this->_getTempFolder($accountName, $projectName), dirname($composerJsonFilePath).'/trl');
         }
+        $this->_logger->info("Download duration: ".(microtime() - $start));
     }
 }
