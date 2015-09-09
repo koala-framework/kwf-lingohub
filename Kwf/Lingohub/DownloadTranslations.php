@@ -49,7 +49,7 @@ class DownloadTranslations
         if ($this->_updateDownloadedTrlFiles) return true;
         $downloadFiles = true;
         if (file_exists($this->_getLastUpdateFile($account, $project))) {
-            $lastDownloadTimestamp = strtotime(substr(file_get_contents('test.txt'), 0, strlen('HHHH-MM-DD')));
+            $lastDownloadTimestamp = strtotime(substr(file_get_contents($this->_getLastUpdateFile($account, $project)), 0, strlen('HHHH-MM-DD')));
             $downloadFiles = strtotime('today') > $lastDownloadTimestamp;
         }
         return $downloadFiles;
