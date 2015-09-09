@@ -69,8 +69,8 @@ class DownloadTranslations
             $kwfLingohub = $composerConfig->extra->{'kwf-lingohub'};
             $accountName = strtolower($kwfLingohub->account);
             $projectName = strtolower($kwfLingohub->project);
+            $trlTempDir = $this->_getTempFolder($accountName, $projectName);
             if ($this->_checkDownloadTrlFiles($accountName, $projectName)) {
-                $trlTempDir = $this->_getTempFolder($accountName, $projectName);
                 if (!file_exists($trlTempDir)) {
                     mkdir($trlTempDir, 0777, true);//write and read for everyone
                 }
@@ -90,9 +90,9 @@ class DownloadTranslations
                 }
                 file_put_contents($this->_getLastUpdateFile($accountName, $projectName), date('Y-m-d H:i:s'));
             }
-            foreach (scandir($this->_getTempFolder($accountName, $projectName)) as $file) {
+            foreach (scandir($trlTempDir) as $file) {
                 if (substr($file, 0, 1) === '.') continue;
-                copy($file, dirname($composerJsonFilePath).'/trl/'.basename($file));
+                copy($trlTempDir.'/'.$file, dirname($composerJsonFilePath).'/trl/'.basename($file));
             }
         }
         $this->_logger->info("Download duration: ".(microtime() - $start));
