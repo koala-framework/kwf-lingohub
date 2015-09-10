@@ -90,6 +90,9 @@ class DownloadTranslations
                 }
                 file_put_contents($this->_getLastUpdateFile($accountName, $projectName), date('Y-m-d H:i:s'));
             }
+            if (!file_exists(dirname($composerJsonFilePath).'/trl/')) {
+                mkdir(dirname($composerJsonFilePath).'/trl/', 0777, true);//write and read for everyone
+            }
             foreach (scandir($trlTempDir) as $file) {
                 if (substr($file, 0, 1) === '.') continue;
                 copy($trlTempDir.'/'.$file, dirname($composerJsonFilePath).'/trl/'.basename($file));
