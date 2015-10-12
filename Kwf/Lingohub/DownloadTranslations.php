@@ -57,7 +57,6 @@ class DownloadTranslations
 
     public function downloadTrlFiles()
     {
-        $start = microtime();
         $this->_logger->info('Iterating over packages and downloading trl-resources');
         $composerJsonFilePaths = DownloadTranslations::getComposerJsonFiles();
         foreach ($composerJsonFilePaths as $composerJsonFilePath) {
@@ -98,6 +97,5 @@ class DownloadTranslations
                 copy($trlTempDir.'/'.$file, dirname($composerJsonFilePath).'/trl/'.basename($file));
             }
         }
-        $this->_logger->info("Download duration: ".(microtime() - $start));
     }
 }
