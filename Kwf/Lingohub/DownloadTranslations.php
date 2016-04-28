@@ -85,10 +85,10 @@ class DownloadTranslations
                     $urlParts = parse_url($resource->links[0]->href);
                     $separator =  isset($urlParts['query']) ? '&' : '?';
                     $file = file_get_contents($resource->links[0]->href.$separator.http_build_query($params));
-                    if (strpos($file, '"Content-Type: text/plain; charset=UTF-8\n"') === false) {
+                    if (strpos($file, '"Content-Type: text/plain; charset=UTF-8"') === false) {
                         $poHeader = "msgid \"\"\n"
                                    ."msgstr \"\"\n"
-                                   ."\"Content-Type: text/plain; charset=UTF-8\\n\"\n\n";
+                                   ."\"Content-Type: text/plain; charset=UTF-8\"\n\n";
                         $file = $poHeader.$file;
                     }
                     file_put_contents($poFilePath, $file);
