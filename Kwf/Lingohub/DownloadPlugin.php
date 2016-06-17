@@ -45,6 +45,10 @@ class DownloadPlugin implements PluginInterface, EventSubscriberInterface
             return;
         }
         $download = new DownloadTranslations(new ComposerOutput($this->_io), $this->_config);
-        $download->downloadTrlFiles();
+        try {
+            $download->downloadTrlFiles();
+        } catch (LingohubException $e) {
+            echo "LingohubException: ".$e->getMessage()."\n";
+        }
     }
 }

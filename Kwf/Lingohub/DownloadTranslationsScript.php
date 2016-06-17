@@ -20,6 +20,11 @@ class DownloadTranslationsScript extends Command
     {
         $download = new DownloadTranslations(new ConsoleLogger($output), new Config());
         $download->forceDownloadTrlFiles(true);
-        $download->downloadTrlFiles();
+        try {
+            $download->downloadTrlFiles();
+        } catch(LingohubException $e) {
+            echo "LingohubException: ".$e->getMessage()."\n";
+            return 1;
+        }
     }
 }

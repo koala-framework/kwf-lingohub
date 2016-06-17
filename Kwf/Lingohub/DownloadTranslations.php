@@ -78,13 +78,23 @@ class DownloadTranslations
                 $resourcesUrl = "https://api.lingohub.com/v1/$accountName"
                     ."/projects/$projectName/resources.json"
                     ."?".http_build_query($params);
-                $resources = json_decode(file_get_contents($resourcesUrl));
+                $content = file_get_contents($resourcesUrl);
+                if ($content === false) {
+                    throw new LingohubException('Service unavailable');
+                }
+                $resources = json_decode($content);
+                if ($resources == null) {
+                    throw new LingohubException('No json returned');
+                }
                 foreach ($resources->members as $resource) {
                     $poFilePath = $trlTempDir.'/'.$resource->project_locale.'.po';
                     $this->_logger->info("Downloading {$resource->name}");
                     $urlParts = parse_url($resource->links[0]->href);
                     $separator =  isset($urlParts['query']) ? '&' : '?';
-                    $file = file_get_contents($resource->links[0]->href.$separator.http_build_query($params));
+                    $file = @file_get_contents($resource->links[0]->href.$separator.http_build_query($params));
+                    if ($file === false) {
+                        throw new LingohubException('Url provided from Lingohub not working');
+                    }
                     if (strpos($file, '"Content-Type: text/plain; charset=UTF-8"') === false) {
                         $poHeader = "msgid \"\"\n"
                                    ."msgstr \"\"\n"
