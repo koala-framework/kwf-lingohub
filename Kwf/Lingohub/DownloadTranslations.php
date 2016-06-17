@@ -18,7 +18,7 @@ class DownloadTranslations
         $this->_config = $config;
     }
 
-    public function forceDownloadTrlFiles($download)
+    public function setForceDownloadTrlFiles($download)
     {
         $this->_updateDownloadedTrlFiles = $download;
     }

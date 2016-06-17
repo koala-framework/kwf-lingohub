@@ -19,7 +19,7 @@ class DownloadTranslationsScript extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $download = new DownloadTranslations(new ConsoleLogger($output), new Config());
-        $download->forceDownloadTrlFiles(true);
+        $download->setForceDownloadTrlFiles(true);
         try {
             $download->downloadTrlFiles();
         } catch(LingohubException $e) {
