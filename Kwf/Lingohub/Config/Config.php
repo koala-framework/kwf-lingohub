@@ -6,15 +6,19 @@ class Config implements ConfigInterface
     protected $_apiToken;
     public function __construct()
     {
-        $path = $this->_getHomeDir().'/koala-framework/kwf-lingohub/config';
-        if (!file_exists($path)) {
-            throw new \Exception("No kwf-lingohub config found! ($path)");
+        if (isset($_ENV['KWF_LINGOHUB_APITOKEN'])) {
+            $this->_apiToken = $_ENV['KWF_LINGOHUB_APITOKEN'];
+        } else {
+            $path = $this->_getHomeDir().'/koala-framework/kwf-lingohub/config';
+            if (!file_exists($path)) {
+                throw new \Exception("No kwf-lingohub config found! ($path)");
+            }
+            $config = json_decode(file_get_contents($path));
+            if (!isset($config->apiToken)) {
+                throw new \Exception("No API-Token found in $path! Cannot load resources without Api-Token!");
+            }
+            $this->_apiToken = $config->apiToken;
         }
-        $config = json_decode(file_get_contents($path));
-        if (!isset($config->apiToken)) {
-            throw new \Exception("No API-Token found in $path! Cannot load resources without Api-Token!");
-        }
-        $this->_apiToken = $config->apiToken;
     }
 
     /**
