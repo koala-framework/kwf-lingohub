@@ -91,7 +91,11 @@ class DownloadTranslations
                     $this->_logger->info("Downloading {$resource->name}");
                     $urlParts = parse_url($resource->links[0]->href);
                     $separator =  isset($urlParts['query']) ? '&' : '?';
-                    $file = @file_get_contents($resource->links[0]->href.$separator.http_build_query($params));
+                    $this->_logger->info('Calling Url: '.$resource->links[0]->href.$separator.http_build_query($params));
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $resource->links[0]->href.$separator.http_build_query($params));
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                    $file = curl_exec($ch);
                     if ($file === false) {
                         throw new LingohubException('Url provided from Lingohub not working');
                     }
