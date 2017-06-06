@@ -78,7 +78,7 @@ class DownloadTranslations
                 $resourcesUrl = "https://api.lingohub.com/v1/$accountName"
                     ."/projects/$projectName/resources.json"
                     ."?".http_build_query($params);
-                $content = file_get_contents($resourcesUrl);
+                $content = $this->_downloadFile($resourcesUrl);
                 if ($content === false) {
                     throw new LingohubException('Service unavailable');
                 }
@@ -92,10 +92,7 @@ class DownloadTranslations
                     $urlParts = parse_url($resource->links[0]->href);
                     $separator =  isset($urlParts['query']) ? '&' : '?';
                     $this->_logger->info('Calling Url: '.$resource->links[0]->href.$separator.http_build_query($params));
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $resource->links[0]->href.$separator.http_build_query($params));
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-                    $file = curl_exec($ch);
+                    $file = $this->_downloadFile($resource->links[0]->href.$separator.http_build_query($params));
                     if ($file === false) {
                         throw new LingohubException('Url provided from Lingohub not working');
                     }
@@ -117,5 +114,25 @@ class DownloadTranslations
                 copy($trlTempDir.'/'.$file, dirname($composerJsonFilePath).'/trl/'.basename($file));
             }
         }
+    }
+
+    private function _downloadFile($url)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+
+        $count = 0;
+        $file = false;
+        while ($file === false && $count < 5) {
+            if ($count != 0) {
+                sleep(5);
+                $this->_logger->warning("Try again downloading file... {$url}");
+            }
+            $file = curl_exec($ch);
+            $count++;
+        }
+        return $file;
     }
 }
