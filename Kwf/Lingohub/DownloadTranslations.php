@@ -73,7 +73,7 @@ class DownloadTranslations
                 if (!file_exists($trlTempDir)) {
                     mkdir($trlTempDir, 0777, true);//write and read for everyone
                 }
-                $this->_logger->info("Checking for resources of {$kwfLingohub->account}/{$kwfLingohub->project}");
+                $this->_logger->warning("Checking/Downloading resources of {$kwfLingohub->account}/{$kwfLingohub->project}");
                 $params = array( 'auth_token' => $this->_config->getApiToken() );
                 $resourcesUrl = "https://api.lingohub.com/v1/$accountName"
                     ."/projects/$projectName/resources.json"
@@ -88,13 +88,14 @@ class DownloadTranslations
                 }
                 foreach ($resources->members as $resource) {
                     $poFilePath = $trlTempDir.'/'.$resource->project_locale.'.po';
-                    $this->_logger->info("Downloading {$resource->name}");
+                    $this->_logger->notice("Downloading {$resource->name}");
                     $urlParts = parse_url($resource->links[0]->href);
                     $separator =  isset($urlParts['query']) ? '&' : '?';
-                    $this->_logger->info('Calling Url: '.$resource->links[0]->href.$separator.http_build_query($params));
-                    $file = $this->_downloadFile($resource->links[0]->href.$separator.http_build_query($params));
+                    $url = $resource->links[0]->href.$separator.http_build_query($params);
+                    $this->_logger->info('Calling Url: '.$url);
+                    $file = $this->_downloadFile($url);
                     if ($file === false) {
-                        throw new LingohubException('Url provided from Lingohub not working');
+                        throw new LingohubException('Url provided from Lingohub not working: '.$url);
                     }
                     if (strpos($file, '"Content-Type: text/plain; charset=UTF-8"') === false) {
                         $poHeader = "msgid \"\"\n"
