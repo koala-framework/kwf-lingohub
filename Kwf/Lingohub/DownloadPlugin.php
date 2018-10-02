@@ -36,7 +36,8 @@ class DownloadPlugin implements PluginInterface, EventSubscriberInterface
 
     public function onPostInstallUpdate(Event $event)
     {
-        $this->_downloadTranslations($event);
+        $skipDownloadTranslations = isset($_SERVER['SKIP_DOWNLOAD_TRANSLATIONS']) && filter_var($_SERVER['SKIP_DOWNLOAD_TRANSLATIONS'], FILTER_VALIDATE_BOOLEAN);
+        if (!$skipDownloadTranslations) $this->_downloadTranslations($event);
     }
 
     private function _downloadTranslations(Event $event)
