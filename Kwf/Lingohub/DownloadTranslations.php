@@ -86,6 +86,10 @@ class DownloadTranslations
                 if ($resources == null) {
                     throw new LingohubException('No json returned');
                 }
+                if (!isset($resources->members)) {
+                    $this->_logger->debug($content);
+                    throw new LingohubException('Invalid response, resource doesn\'t contain members');
+                }
                 foreach ($resources->members as $resource) {
                     $poFilePath = $trlTempDir.'/'.$resource->project_locale.'.po';
                     $this->_logger->notice("Downloading {$resource->name}");
@@ -119,6 +123,7 @@ class DownloadTranslations
 
     private function _downloadFile($url)
     {
+        $this->_logger->debug("fetching $url");
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -133,6 +138,9 @@ class DownloadTranslations
             }
             $file = curl_exec($ch);
             $count++;
+        }
+        if (curl_getinfo($ch, CURLINFO_HTTP_CODE) != 200) {
+            throw new LingohubException('Request to '.$url.' failed with '.curl_getinfo($ch, CURLINFO_HTTP_CODE).': '.$file);
         }
         return $file;
     }
