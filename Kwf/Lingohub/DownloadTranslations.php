@@ -128,20 +128,63 @@ class DownloadTranslations
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_HEADER, 1);
 
         $count = 0;
-        $file = false;
-        while ($file === false && $count < 5) {
+        $response = false;
+        while ($response === false && $count < 5) {
             if ($count != 0) {
                 sleep(5);
                 $this->_logger->warning("Try again downloading file... {$url}");
             }
-            $file = curl_exec($ch);
+            $response = curl_exec($ch);
             $count++;
         }
         if (curl_getinfo($ch, CURLINFO_HTTP_CODE) != 200) {
-            throw new LingohubException('Request to '.$url.' failed with '.curl_getinfo($ch, CURLINFO_HTTP_CODE).': '.$file);
+            throw new LingohubException('Request to ' . $url . ' failed with ' . curl_getinfo($ch, CURLINFO_HTTP_CODE) . ': ' . $response);
         }
-        return $file;
+
+        // Workaround until new api is available from lingohub where we can download all translations at once
+        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $headers = $this->_http_parse_headers(substr($response, 0, $headerSize));
+        if (isset($headers['X-Ratelimit-Remaining']) && $headers['X-Ratelimit-Remaining'] < 20) {
+            $seconds = isset($headers['X-Ratelimit-Resetrate']) ? (int)$headers['X-Ratelimit-Resetrate'] : 1;
+            $this->_logger->warning("Wait {$seconds} second(s) because of Rate Limit is: {$headers['X-Ratelimit-Remaining']}");
+            sleep($seconds);
+        }
+
+        return substr($response, $headerSize);
+    }
+
+    // https://php.uz/manual/en/function.http-parse-headers.php#112986
+    private function _http_parse_headers($rawHeaders)
+    {
+        $headers = array();
+        $key = '';
+
+        foreach (explode("\n", $rawHeaders) as $i => $h) {
+            $h = explode(':', $h, 2);
+
+            if (isset($h[1])) {
+                if (!isset($headers[$h[0]])) {
+                    $headers[$h[0]] = trim($h[1]);
+                } elseif (is_array($headers[$h[0]])) {
+                    $headers[$h[0]] = array_merge($headers[$h[0]], array(trim($h[1])));
+                } else {
+                    $headers[$h[0]] = array_merge(array($headers[$h[0]]), array(trim($h[1])));
+                }
+
+                $key = $h[0];
+            } else {
+                if (substr($h[0], 0, 1) == "\t") {
+                    $headers[$key] .= "\r\n\t" . trim($h[0]);
+                } elseif (!$key) {
+                    $headers[0] = trim($h[0]);
+                }
+                trim($h[0]);
+            }
+        }
+
+        return $headers;
     }
 }
