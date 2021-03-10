@@ -75,39 +75,26 @@ class DownloadTranslations
                 }
                 $this->_logger->warning("Checking/Downloading resources of {$kwfLingohub->account}/{$kwfLingohub->project}");
                 $params = array( 'auth_token' => $this->_config->getApiToken() );
-                $resourcesUrl = "https://api.lingohub.com/v1/$accountName"
-                    ."/projects/$projectName/resources"
-                    ."?".http_build_query($params);
-                $content = $this->_downloadFile($resourcesUrl);
-                if ($content === false) {
-                    throw new LingohubException('Service unavailable');
-                }
-                $resources = json_decode($content);
-                if ($resources == null) {
-                    throw new LingohubException('No json returned');
-                }
-                if (!isset($resources->members)) {
-                    $this->_logger->debug($content);
-                    throw new LingohubException('Invalid response, resource doesn\'t contain members');
-                }
-                foreach ($resources->members as $resource) {
-                    $poFilePath = $trlTempDir.'/'.$resource->project_locale.'.po';
-                    $this->_logger->notice("Downloading {$resource->name}");
-                    $urlParts = parse_url($resource->links[0]->href);
-                    $separator =  isset($urlParts['query']) ? '&' : '?';
-                    $url = $resource->links[0]->href.$separator.http_build_query($params);
-                    $this->_logger->info('Calling Url: '.$url);
-                    $file = $this->_downloadFile($url);
-                    if ($file === false) {
-                        throw new LingohubException('Url provided from Lingohub not working: '.$url);
+
+                $export = $this->_triggerAndWaitForExport($accountName, $projectName, $params);
+                foreach ($export['resourceExports'] as $resource) {
+                    $poFilePath = $trlTempDir.'/'.$resource['filePath'];
+                    if ($resource['status'] !== 'SUCCESS') {
+                        $this->_logger->alert("Export for {$resource['filePath']} failed...");
+                    } else {
+                        $this->_logger->notice("Downloading {$resource['filePath']}");
+                        $file = $this->_getData($resource['downloadUrl']);
+                        if ($file === false) {
+                            throw new LingohubException('Url provided from Lingohub not working: '.$url);
+                        }
+                        if (strpos($file, '"Content-Type: text/plain; charset=UTF-8"') === false) {
+                            $poHeader = "msgid \"\"\n"
+                                ."msgstr \"\"\n"
+                                ."\"Content-Type: text/plain; charset=UTF-8\"\n\n";
+                            $file = $poHeader.$file;
+                        }
+                        file_put_contents($poFilePath, $file);
                     }
-                    if (strpos($file, '"Content-Type: text/plain; charset=UTF-8"') === false) {
-                        $poHeader = "msgid \"\"\n"
-                                   ."msgstr \"\"\n"
-                                   ."\"Content-Type: text/plain; charset=UTF-8\"\n\n";
-                        $file = $poHeader.$file;
-                    }
-                    file_put_contents($poFilePath, $file);
                 }
                 file_put_contents($this->_getLastUpdateFile($accountName, $projectName), date('Y-m-d H:i:s'));
             }
@@ -121,7 +108,65 @@ class DownloadTranslations
         }
     }
 
-    private function _downloadFile($url)
+    private function _triggerAndWaitForExport($accountName, $projectName, $params)
+    {
+        $triggerCreateExportUrl = "https://api.lingohub.com/v1/$accountName"
+            ."/projects/$projectName/exports"
+            ."?".http_build_query($params);
+        $export = json_decode($this->_postData($triggerCreateExportUrl), true);
+
+        while(in_array($export['status'], array('PROCESSING', 'SCHEDULED', 'NEW'))) {
+            $getExportUrl = "https://api.lingohub.com/v1/$accountName"
+                ."/projects/$projectName/exports/{$export['id']}"
+                ."?".http_build_query($params);
+            sleep(1);
+            $export = json_decode($this->_getData($getExportUrl), true);
+        }
+        if ($export['status'] !== 'SUCCESS') {
+
+            if ($export['status'] === 'ERROR') {
+                $this->_logger->critical("Post to start export failed: " . $export['errorDetails']);
+                throw new LingohubException("Post to start lingohub export failed!");
+            } else {
+                throw new LingohubException("Unexpected status from lingohub export-api");
+            }
+        }
+        return $export;
+    }
+
+    private function _postData($url)
+    {
+        $this->_logger->debug("posting (POST $url)");
+        $ch = curl_init();
+        curl_setopt_array($ch, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_CONNECTTIMEOUT => 5
+        ));
+
+        $count = 0;
+        $response = false;
+        while ($response === false && $count < 5) {
+            if ($count != 0) {
+                sleep(5);
+                $this->_logger->warning("retry posting... (POST {$url})");
+            }
+            $response = curl_exec($ch);
+            $count++;
+        }
+        if (curl_getinfo($ch, CURLINFO_HTTP_CODE) != 200) {
+            throw new LingohubException('Request to '.$url.' failed with '.curl_getinfo($ch, CURLINFO_HTTP_CODE).': '.$response);
+        }
+        return $response;
+    }
+
+    private function _getData($url)
     {
         $this->_logger->debug("fetching $url");
         $ch = curl_init();
@@ -130,18 +175,18 @@ class DownloadTranslations
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
 
         $count = 0;
-        $file = false;
-        while ($file === false && $count < 5) {
+        $response = false;
+        while ($response === false && $count < 5) {
             if ($count != 0) {
                 sleep(5);
                 $this->_logger->warning("Try again downloading file... {$url}");
             }
-            $file = curl_exec($ch);
+            $response = curl_exec($ch);
             $count++;
         }
         if (curl_getinfo($ch, CURLINFO_HTTP_CODE) != 200) {
-            throw new LingohubException('Request to '.$url.' failed with '.curl_getinfo($ch, CURLINFO_HTTP_CODE).': '.$file);
+            throw new LingohubException('Request to '.$url.' failed with '.curl_getinfo($ch, CURLINFO_HTTP_CODE).': '.$response);
         }
-        return $file;
+        return $response;
     }
 }
