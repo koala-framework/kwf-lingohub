@@ -59,6 +59,7 @@ class DownloadTranslations
     {
         $this->_logger->info('Iterating over packages and downloading trl-resources');
         $composerJsonFilePaths = DownloadTranslations::getComposerJsonFiles();
+        $downloadErrors = array();
         foreach ($composerJsonFilePaths as $composerJsonFilePath) {
             $composerJsonFile = file_get_contents($composerJsonFilePath);
             $composerConfig = json_decode($composerJsonFile);
@@ -76,14 +77,27 @@ class DownloadTranslations
                 $this->_logger->warning("Checking/Downloading resources of {$kwfLingohub->account}/{$kwfLingohub->project}");
                 $params = array( 'auth_token' => $this->_config->getApiToken() );
 
-                $export = $this->_triggerAndWaitForExport($accountName, $projectName, $params);
+                try {
+                    $export = $this->_triggerAndWaitForExport($accountName, $projectName, $params);
+                } catch(LingohubException $e) {
+                    echo "LingohubException: ".$e->getMessage()."\n";
+                    $downloadErrors[] = $projectName;
+                    continue;
+                }
                 foreach ($export['resourceExports'] as $resource) {
                     $poFilePath = $trlTempDir.'/'.$resource['filePath'];
                     if ($resource['status'] !== 'SUCCESS') {
                         $this->_logger->alert("Export for {$resource['filePath']} failed...");
                     } else {
                         $this->_logger->notice("Downloading {$resource['filePath']}");
-                        $file = $this->_getData($resource['downloadUrl']);
+                        try {
+                            $file = $this->_getData($resource['downloadUrl']);
+                        } catch(LingohubException $e) {
+                            echo "LingohubException: ".$e->getMessage()."\n";
+                            $downloadErrors[] = $projectName;
+                            break;
+                        }
+
                         if ($file === false) {
                             throw new LingohubException('Url provided from Lingohub not working: '.$url);
                         }
@@ -104,6 +118,12 @@ class DownloadTranslations
             foreach (scandir($trlTempDir) as $file) {
                 if (substr($file, 0, 1) === '.') continue;
                 copy($trlTempDir.'/'.$file, dirname($composerJsonFilePath).'/trl/'.basename($file));
+            }
+        }
+        if (!empty($downloadErrors)) {
+            echo "\nDownload errors in the following projects: \n";
+            foreach($downloadErrors as $projectName) {
+                echo $projectName . "\n";
             }
         }
     }
