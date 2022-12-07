@@ -79,6 +79,8 @@ class DownloadTranslations
                 $export = $this->_triggerAndWaitForExport($accountName, $projectName, $params);
                 foreach ($export['resourceExports'] as $resource) {
                     $poFilePath = $trlTempDir.'/'.$resource['filePath'];
+                    $poFilePathWithUnderscoreSeparator = $trlTempDir.'/'.(str_replace('-', '_', $resource['filePath']));
+                    $poFilePathWithHyphenSeparator = $trlTempDir.'/'.(str_replace('_', '-', $resource['filePath']));
                     if ($resource['status'] !== 'SUCCESS') {
                         $this->_logger->alert("Export for {$resource['filePath']} failed...");
                     } else {
@@ -93,7 +95,13 @@ class DownloadTranslations
                                 ."\"Content-Type: text/plain; charset=UTF-8\"\n\n";
                             $file = $poHeader.$file;
                         }
-                        file_put_contents($poFilePath, $file);
+                        if ($poFilePathWithHyphenSeparator == $poFilePathWithUnderscoreSeparator) {
+                            // hat kein trennzeichen
+                            file_put_contents($poFilePath, $file);
+                        } else {
+                            file_put_contents($poFilePathWithHyphenSeparator, $file);
+                            file_put_contents($poFilePathWithUnderscoreSeparator, $file);
+                        }
                     }
                 }
                 file_put_contents($this->_getLastUpdateFile($accountName, $projectName), date('Y-m-d H:i:s'));
