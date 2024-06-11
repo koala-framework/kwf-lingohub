@@ -5,9 +5,12 @@
     "license": "BSD-2-Clause",
     "type": "composer-plugin",
     "require": {
-        "composer-plugin-api": "^1.0",
+        "composer-plugin-api": "^1.0 || ^2.0",
         "symfony/console": "~2.6",
         "psr/log": "~1.0"
+    },
+    "require-dev": {
+        "composer/composer": "^2.0"
     },
     "extra": {
         "class": "Kwf\\Lingohub\\DownloadPlugin"
